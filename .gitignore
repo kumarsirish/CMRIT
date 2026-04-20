@@ -1,0 +1,99 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+wheels/
+*.whl
+MANIFEST
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+test-output.xml
+*.log
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Distribution / Packaging
+*.tar.gz
+*.zip
+
+# mypy / pyright / type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+
+# Ruff / Linters
+.ruff_cache/
+
+# Docker
+*.env.local
+*.env.*.local
+
+# Node (for Movie_ticket_booking_website & frontend subprojects)
+node_modules/
+dist/
+.npm
+
+# Secrets & credentials
+*.pem
+*.key
+secrets.yaml
+secrets.json
+.env.*
+!.env.example
+
+# OS-specific
+Zone.Identifier
+*.Zone.Identifier
+
+# Model files (large binary artifacts)
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.onnx
+CodeDetector/model/
