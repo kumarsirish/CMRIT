@@ -57,8 +57,16 @@ def style_below_passing(value, passing_marks):
         return ""
 
 
+def round_float_columns(df):
+    rounded_df = df.copy()
+    float_columns = rounded_df.select_dtypes(include=["floating"]).columns
+    if len(float_columns) > 0:
+        rounded_df[float_columns] = rounded_df[float_columns].round(1)
+    return rounded_df
+
+
 def center_styler(df):
-    return df.style.set_properties(**{"text-align": "justify", "text-justify": "inter-word"}).set_table_styles(
+    return df.style.format(precision=1).set_properties(**{"text-align": "justify", "text-justify": "inter-word"}).set_table_styles(
         [
             {
                 "selector": "th",
@@ -84,72 +92,102 @@ def render_tyl_analysis_dashboard():
             st.rerun()
 
     with top_col2:
-        st.title("TYL Analysis Dashboard")
+        st.markdown(
+            "<h1 style='text-align: center;'>TYL Analysis Dashboard</h1>",
+            unsafe_allow_html=True,
+        )
+    '''
+        Final year tyl eligibility 
 
-    st.markdown("### TYL Eligibility")
-    eligibility_df = pd.DataFrame(
-        {
-            "Final year": [4, 4, 5, "3.5 or 4", 3],
-            "6th semester": [4, 3, 3, 3.5, 3],
-            "4th semester": [3, 1, 2, 3, 2],
-        },
-        index=["Lx", "Ax", "Cx", "Px", "Sx"],
-    )
-    st.table(center_styler(eligibility_df))
+        Lx4
+        Ax 4
+        Cx5
+        Px 3.5.or 4
+        Sx 3
 
-    st.markdown("### TYL Marks Reference")
-    marks_reference_df = pd.DataFrame(
-        {
-            "L1": [100, 65],
-            "L2": [100, 65],
-            "L3": [100, 70],
-            "L4": [100, 70],
-            "A1": [100, 50],
-            "A2": [100, 50],
-            "A3": [100, 50],
-            "A4": [100, 65],
-            "S1": [100, 50],
-            "S2": [100, 50],
-            "S3": [100, 50],
-            "S4": [100, 50],
-            "C2 Odd": [25, 10],
-            "C2 Full": [25, 10],
-            "C3 Odd": [100, 15],
-            "C3 Full": [100, 25],
-            "C4 Odd": [100, 50],
-            "C4 Full": [100, 50],
-            "C5 Full": [100, 50],
-            "P1-C": [100, 50],
-            "P2-Python": [100, 50],
-            "P3-Python": [100, 60],
-            "P3-Java": [100, 60],
-            "P4-Programming part 1": [100, 70],
-            "P4-Programming part 2": [100, 70],
-            "P4-MAD/FSD": [100, 70],
-            "P4-DS": [100, 70],
-        },
-        index=["Max marks", "Pass marks"],
-    )
-    st.table(center_styler(marks_reference_df))
+        6th semester eligibility 
+        Lx4
+        Ax3
+        CX3
+        Px3.5 
+        Sx 3
 
+
+        4th semester eligibility 
+        Lx 3
+        Ax1
+        Cx 2
+        Px 3
+        Sx 2
+    '''
     uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
 
     col1, col2 = st.columns(2)
     with col1:
-        passing_marks = st.number_input("Passing marks", min_value=0, max_value=100, value=50)
-        required_below = st.number_input(
-            "Subjects in which student scored below passing marks (e.g. 1 for at least 1 subject, 2 for at least 2 subjects, etc.)",
-            min_value=1,
-            max_value=4,
-            value=1,
+        semester = st.selectbox(
+            "Semester",
+            options=["4th Semester", "6th Semester", "Final Year"],
         )
     with col2:
         sheets_text = st.text_input("Sheets (comma separated)", "UG-AIML,UG-CSAIML")
 
-    if st.button("Run Analysis"):
+    col3, col4 = st.columns(2)
+    with col3:
+        passing_marks = st.number_input("Passing marks", min_value=0, max_value=100, value=50)
+    with col4:
+        required_below = st.number_input(
+            "Subjects scored below passing marks",
+            help="e.g. 1 for at least 1 subject, 2 for at least 2 subjects, etc.",
+            min_value=1,
+            max_value=4,
+            value=1,
+        )
+
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stButton"] > button[kind="primary"] {
+            display: block;
+            margin: 0 auto;
+            padding: 0.75rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background-color: #1976D2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+        div[data-testid="stButton"] > button[kind="primary"]:hover {
+            background-color: #1565C0;
+            color: white;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    _, btn_col, _ = st.columns([2, 1, 2])
+    with btn_col:
+        run_clicked = st.button("🔍 Run Analysis", type="primary", use_container_width=True)
+
+    if run_clicked:
+        semester_skills_map = {
+            "4th Semester": {
+                "Ax": ["A1", "A2"],
+                "Sx": ["S1", "S2"],
+            },
+            "6th Semester": {
+                "Ax": ["A1", "A2", "A3"],
+                "Sx": ["S1", "S2", "S3"],
+            },
+            "Final Year": {
+                "Ax": ["A1", "A2", "A3", "A4"],
+                "Sx": ["S1", "S2", "S3", "S4"],
+            },
+        }
+        selected_skills = semester_skills_map[semester]
         skills = [
-            Skill(name="Ax", score_suffixes=["A1", "A2", "A3"], passing_marks=int(passing_marks)),
-            Skill(name="Sx", score_suffixes=["S1", "S2", "S3"], passing_marks=int(passing_marks)),
+            Skill(name=name, score_suffixes=suffixes, passing_marks=int(passing_marks))
+            for name, suffixes in selected_skills.items()
         ]
         passing_marks_by_skill = {skill.name: skill.passing_marks for skill in skills}
 
@@ -198,14 +236,14 @@ def render_tyl_analysis_dashboard():
                     st.warning(details["error"])
                     continue
 
-                filtered_df = details["data"]
+                filtered_df = round_float_columns(details["data"])
                 st.write(f"Students matched: {len(filtered_df)}")
                 score_columns = details["score_columns"]
                 skill_passing_marks = passing_marks_by_skill.get(skill_name, int(passing_marks))
                 styled_df = filtered_df.style.map(
                     lambda value: style_below_passing(value, skill_passing_marks),
                     subset=score_columns,
-                ).set_properties(**{"text-align": "justify", "text-justify": "inter-word"}).set_table_styles(
+                ).format(precision=1).set_properties(**{"text-align": "justify", "text-justify": "inter-word"}).set_table_styles(
                     [
                         {
                             "selector": "th",
@@ -239,3 +277,55 @@ def render_tyl_analysis_dashboard():
                     file_name=f"{sheet_name}_{skill_name}.csv",
                     mime="text/csv",
                 )
+
+    st.divider()
+    with st.container(border=True):
+        st.markdown(
+            "<p style='color: grey; font-style: italic;'>📋 The following tables are for reference only.</p>",
+            unsafe_allow_html=True,
+        )
+        st.markdown("### TYL Eligibility")
+        eligibility_df = pd.DataFrame(
+            {
+                "Final year": [4, 4, 5, "3.5 or 4", 3],
+                "6th semester": [4, 3, 3, 3.5, 3],
+                "4th semester": [3, 1, 2, 3, 2],
+            },
+            index=["Lx", "Ax", "Cx", "Px", "Sx"],
+        )
+        st.table(center_styler(eligibility_df))
+
+        st.markdown("### TYL Marks Reference")
+        marks_reference_df = pd.DataFrame(
+            {
+                "L1": [100, 65],
+                "L2": [100, 65],
+                "L3": [100, 70],
+                "L4": [100, 70],
+                "A1": [100, 50],
+                "A2": [100, 50],
+                "A3": [100, 50],
+                "A4": [100, 65],
+                "S1": [100, 50],
+                "S2": [100, 50],
+                "S3": [100, 50],
+                "S4": [100, 50],
+                "C2 Odd": [25, 10],
+                "C2 Full": [25, 10],
+                "C3 Odd": [100, 15],
+                "C3 Full": [100, 25],
+                "C4 Odd": [100, 50],
+                "C4 Full": [100, 50],
+                "C5 Full": [100, 50],
+                "P1-C": [100, 50],
+                "P2-Python": [100, 50],
+                "P3-Python": [100, 60],
+                "P3-Java": [100, 60],
+                "P4-Programming part 1": [100, 70],
+                "P4-Programming part 2": [100, 70],
+                "P4-MAD/FSD": [100, 70],
+                "P4-DS": [100, 70],
+            },
+            index=["Max marks", "Pass marks"],
+        )
+        st.table(center_styler(marks_reference_df))

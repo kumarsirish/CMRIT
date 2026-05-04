@@ -6,7 +6,7 @@ build:
 	pip install -r requirements.txt
 
 test:
-	PYTHONPATH=src pytest tests/test_tyl_dashboard.py
+	PYTHONPATH=src pytest -v -rs tests/test_tyl_dashboard.py
 
 run:
 	streamlit run src/streamlit_app.py
