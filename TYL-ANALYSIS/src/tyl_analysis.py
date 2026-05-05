@@ -1,13 +1,13 @@
 import pandas as pd
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Union
 
 
 @dataclass
 class Skill:
     name: str
     score_suffixes: List[str]
-    passing_marks: int
+    passing_marks: Union[int, Dict[str, int]]
 
     def score_suffix_patterns(self):
         return self.score_suffixes
@@ -52,11 +52,28 @@ def find_score_columns_by_suffix(df, suffix_patterns):
     return score_columns
 
 
+def get_threshold_for_column(col: str, passing_marks: Union[int, Dict[str, int]]) -> int:
+    """Return the passing threshold for a given (flattened) column name."""
+    if isinstance(passing_marks, int):
+        return passing_marks
+    for suffix, threshold in passing_marks.items():
+        if col.endswith(suffix):
+            return threshold
+    return 50  # fallback
+
+
 def get_filtered_df(df, score_columns, passing_marks, required_below_count):
     for col in score_columns:
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-    condition = (df[score_columns] < passing_marks).sum(axis=1) == required_below_count
+    if isinstance(passing_marks, dict):
+        below_mask = pd.DataFrame(
+            {col: df[col] < get_threshold_for_column(col, passing_marks) for col in score_columns}
+        )
+    else:
+        below_mask = df[score_columns] < passing_marks
+
+    condition = below_mask.sum(axis=1) == required_below_count
     return df[condition]
 
 
